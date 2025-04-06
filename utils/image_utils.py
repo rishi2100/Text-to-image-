@@ -1,9 +1,15 @@
-import shutil
-import random
 import os
+import random
 
-def copy_random_image(src_folder, dest_path):
-    images = os.listdir(src_folder)
-    img = random.choice(images)
-    shutil.copy(os.path.join(src_folder, img), dest_path)
-    return os.path.relpath(dest_path, 'static')
+def get_random_deepfashion_image(base_path='deepfashion/img/', num=1):
+    image_paths = []
+
+    for root, _, files in os.walk(base_path):
+        for file in files:
+            if file.endswith(('.jpg', '.jpeg', '.png')):
+                image_paths.append(os.path.join(root, file))
+
+    if not image_paths:
+        return []
+
+    return random.sample(image_paths, min(num, len(image_paths)))

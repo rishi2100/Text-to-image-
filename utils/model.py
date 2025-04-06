@@ -1,14 +1,33 @@
+from utils.image_indexer import index_deepfashion_images
 import random
-import os
-from utils.image_utils import copy_random_image
+import shutil
+
+# Load once globally
+image_db = index_deepfashion_images()
+
+def match_prompt_to_image(prompt):
+    prompt_words = prompt.lower().split()
+    matches = []
+
+    for entry in image_db:
+        score = sum(word in entry['tags'] for word in prompt_words)
+        if score > 0:
+            matches.append((score, entry['path']))
+
+    matches.sort(reverse=True)  # Highest score first
+    return [m[1] for m in matches]
 
 def generate_image_and_recommendations(prompt, timestamp):
-    # Simulate generation (copy random image)
-    generated_img = copy_random_image('deepfashion', f'static/generated_images/generated_{timestamp}.jpg')
-    
-    # Simulate recommendations
-    rec_images = os.listdir('deepfashion')
-    recommendations = random.sample(rec_images, 6)
+    matched_images = match_prompt_to_image(prompt)
 
-    rec_data = [{"path": f"deepfashion/{img}", "title": img.split('.')[0]} for img in recommendations]
-    return f"generated_images/generated_{timestamp}.jpg", rec_data
+    if not matched_images:
+        return None, []
+
+    # "Generate" image = top match
+    generated_img_path = matched_images[0]
+    output_path = f"static/generated_images/generated_{timestamp}.jpg"
+    shutil.copy(generated_img_path, output_path)
+
+    # Recommend 6 similar ones
+    recommendations = matched_images[1:7]
+    return output_path, recommendations

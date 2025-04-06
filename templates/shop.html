@@ -14,7 +14,7 @@
         <div class="gallery">
             {% for rec in recommendations %}
                 <div class="card">
-                    <img src="{{ url_for('static', filename=rec['path']) }}" alt="{{ rec['title'] }}">
+                    <img src="{{ url_for('static', filename=generated_image) }}" alt="Generated Fashion" class="main-img">
                     <p>{{ rec['title'] }}</p>
                 </div>
             {% endfor %}

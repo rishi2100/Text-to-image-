@@ -11,6 +11,15 @@
         <form action="{{ url_for('shop') }}" method="POST">
             <input type="text" name="prompt" placeholder="Describe your fashion vibe..." required>
             <button type="submit">Generate Look</button>
+            <img src="{{ url_for('static', filename=generated_image) }}" alt="Generated Fashion" class="main-img">
+
+            {% for img in recommendations %}
+              <div class="product">
+                <img src="{{ url_for('static', filename=img) }}" alt="Recommended Product">
+                <p>Suggested Item</p>
+              </div>
+            {% endfor %}
+            
         </form>
     </div>
 </body>
