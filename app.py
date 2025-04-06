@@ -1,44 +1,25 @@
-
-from flask import Flask, render_template, request, send_from_directory
-import torch
-from diffusers import DiffusionPipeline
+from flask import Flask, render_template, request, redirect, url_for
+from utils.model import generate_image_and_recommendations
 import os
 from datetime import datetime
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/generated_images'
 
-# Set device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Load model and attention processors
-pipeline = DiffusionPipeline.from_pretrained(
-    "stabilityai/stable-diffusion-2", torch_dtype=torch.float32
-)
-pipeline = pipeline.to(device)
-pipeline.unet.load_attn_procs("NouRed/sd-fashion-products")
-
-# Ensure directory exists
-GENERATED_DIR = "static/generated"
-os.makedirs(GENERATED_DIR, exist_ok=True)
-
-@app.route("/", methods=["GET", "POST"])
+@app.route('/')
 def index():
-    image_path = None
-    if request.method == "POST":
-        prompt = request.form["prompt"]
-        generator = torch.Generator(device=device).manual_seed(42)
+    return render_template('index.html')
 
-        image = pipeline(prompt, num_inference_steps=30, generator=generator).images[0]
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{timestamp}.png"
-        image_path = f"{GENERATED_DIR}/{filename}"
-        image.save(image_path)
+@app.route('/shop', methods=['POST'])
+def shop():
+    prompt = request.form['prompt']
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    image_path, recommendations = generate_image_and_recommendations(prompt, timestamp)
 
-    return render_template("index.html", image_path=image_path)
+    return render_template('shop.html', 
+                           user_prompt=prompt, 
+                           generated_image=image_path, 
+                           recommendations=recommendations)
 
-@app.route('/static/generated/<path:filename>')
-def serve_image(filename):
-    return send_from_directory(GENERATED_DIR, filename)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
